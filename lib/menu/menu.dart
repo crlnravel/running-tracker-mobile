@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:running_tracker/form/form.dart';
+import 'package:running_tracker/widget/left_drawer.dart';
 
 class MyPage extends StatefulWidget {
   const MyPage({super.key});
@@ -12,9 +14,20 @@ class MyPage extends StatefulWidget {
 class _MyPageState extends State<MyPage> {
   int currentPageIndex = 0;
 
+  void changePage(int page) {
+    setState(() {
+      currentPageIndex = page;
+    });
+    Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(),
+      drawer: LeftDrawer(
+        changePageCallback: changePage,
+      ),
       bottomNavigationBar: NavigationBar(
         onDestinationSelected: (int index) {
           String msg = "";
@@ -72,19 +85,12 @@ class _MyPageState extends State<MyPage> {
             ),
           ),
         ),
-        Card(
-          margin: const EdgeInsets.all(8.0),
-          child: SizedBox.expand(
-            child: Center(
-              child: Text(
-                'Tambah Buku',
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-            ),
-          ),
+        const Padding(
+          padding: EdgeInsets.all(8.0),
+          child: FormWidget(),
         ),
         Card(
-            margin: EdgeInsets.all(8.0),
+            margin: const EdgeInsets.all(8.0),
             child: SizedBox.expand(
               child: Center(
                 child: ElevatedButton(
