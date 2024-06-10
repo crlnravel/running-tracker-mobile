@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:provider/provider.dart';
 import 'package:running_tracker/form/form.dart';
+import 'package:running_tracker/screens/list_item.dart';
+import 'package:running_tracker/screens/login.dart';
 import 'package:running_tracker/widget/left_drawer.dart';
 
 class MyPage extends StatefulWidget {
@@ -23,6 +27,8 @@ class _MyPageState extends State<MyPage> {
 
   @override
   Widget build(BuildContext context) {
+    final request = context.watch<CookieRequest>();
+
     return Scaffold(
       appBar: AppBar(),
       drawer: LeftDrawer(
@@ -34,7 +40,17 @@ class _MyPageState extends State<MyPage> {
 
           switch (index) {
             case 0:
-              msg = "Home";
+              Navigator.push(context, MaterialPageRoute(builder: (context) => Card(
+                margin: const EdgeInsets.all(8.0),
+                child: SizedBox.expand(
+                  child: Center(
+                    child: Text(
+                      'Home page',
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                  ),
+                ),
+              ),));
               break;
             case 1:
               msg = "Lihat Buku";
@@ -46,12 +62,7 @@ class _MyPageState extends State<MyPage> {
               msg = "Profile";
               break;
           }
-          ScaffoldMessenger.of(context).removeCurrentSnackBar();
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text(msg)));
-          setState(() {
-            currentPageIndex = index;
-          });
+          
         },
         destinations: const <Widget>[
           NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
@@ -63,6 +74,7 @@ class _MyPageState extends State<MyPage> {
         indicatorColor: Colors.blueAccent,
       ),
       body: <Widget>[
+
         Card(
           margin: const EdgeInsets.all(8.0),
           child: SizedBox.expand(
@@ -74,30 +86,41 @@ class _MyPageState extends State<MyPage> {
             ),
           ),
         ),
-        Card(
-          margin: const EdgeInsets.all(8.0),
-          child: SizedBox.expand(
-            child: Center(
-              child: Text(
-                'Lihat Buku',
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-            ),
-          ),
-        ),
+
+        const ItemPage(),
+
         const Padding(
           padding: EdgeInsets.all(8.0),
           child: FormWidget(),
         ),
+
         Card(
             margin: const EdgeInsets.all(8.0),
             child: SizedBox.expand(
               child: Center(
                 child: ElevatedButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).removeCurrentSnackBar();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Aku logout")));
+                  onPressed: () async {
+                    final response = await request.logout(
+                        "http://localhost:8000/auth/logout/");
+                    String message = response["message"];
+                    if (context.mounted) {
+                      if (response['status']) {
+                        String uname = response["username"];
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text("$message Sampai jumpa, $uname."),
+                        ));
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) => const LoginPage()),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(message),
+                          ),
+                        );
+                      }
+                    }
                   },
                   child: Text(
                     "Afkh ingin logout?",
@@ -106,6 +129,7 @@ class _MyPageState extends State<MyPage> {
                 ),
               ),
             ))
+
       ][currentPageIndex],
     );
   }

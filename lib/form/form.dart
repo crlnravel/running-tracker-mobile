@@ -1,4 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:provider/provider.dart';
+import 'package:running_tracker/screens/menu.dart';
 
 class FormWidget extends StatefulWidget {
   const FormWidget({super.key});
@@ -11,12 +16,14 @@ class FormWidget extends StatefulWidget {
 
 class _FormWidgetState extends State<FormWidget> {
   final _formKey = GlobalKey<FormState>();
-  String _judul = "";
+  String _name = "";
   int _distance = 0;
   String _description = "";
 
   @override
   Widget build(BuildContext context) {
+    final request = context.watch<CookieRequest>();
+
     return Form(
       key: _formKey,
       child: SingleChildScrollView(
@@ -34,7 +41,7 @@ class _FormWidgetState extends State<FormWidget> {
                     )),
                 onChanged: (String? value) {
                   setState(() {
-                    _judul = value!;
+                    _name = value!;
                   });
                 },
                 validator: (String? value) {
@@ -98,34 +105,39 @@ class _FormWidgetState extends State<FormWidget> {
                 padding: const EdgeInsets.all(8.0),
                 child: ElevatedButton(
                   style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.all(Colors.lightBlue),
+                    backgroundColor:
+                        MaterialStateProperty.all(Colors.lightBlue),
                   ),
-                  onPressed: () {
+                  onPressed: () async {
                     if (_formKey.currentState!.validate()) {
-                      showDialog(context: context, builder: (context) {
-                        return AlertDialog(
-                          title: const Text("Data baru telah ditambahkan!"),
-                          content: SingleChildScrollView(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Judul: $_judul'),
-                                Text('Jarak: $_distance'),
-                                Text('Deskripsi: $_description'),
-                              ],
-                            ),
-                          ),
-                          actions: [
-                            TextButton(
-                              child: const Text("OK?"),
-                              onPressed: () {
-                                Navigator.pop(context);
-                                _formKey.currentState!.reset();
-                              },
-                            )
-                          ],
-                        );
-                      });
+                      // Kirim ke Django dan tunggu respons
+                      final response = await request.postJson(
+                        "http://localhost:8000/create-flutter/",
+                        jsonEncode(<String, String>{
+                          'name': _name,
+                          'distance': _distance.toString(),
+                          'description': _description,
+                        }),
+                      );
+                      if (context.mounted) {
+                        if (response['status'] == 'success') {
+                          ScaffoldMessenger.of(context)
+                              .showSnackBar(const SnackBar(
+                            content: Text("Buku baru berhasil disimpan!"),
+                          ));
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const MyPage()),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context)
+                              .showSnackBar(const SnackBar(
+                            content:
+                                Text("Terdapat kesalahan, silakan coba lagi."),
+                          ));
+                        }
+                      }
                     }
                   },
                   child: const Text(

@@ -41,6 +41,13 @@ class LeftDrawer extends StatelessWidget {
             },
           ),
           ListTile(
+            leading: const Icon(Icons.book),
+            title: const Text("Lihat Buku"),
+            onTap: () {
+              changePageCallback(1);
+            },
+          ),
+          ListTile(
             leading: const Icon(Icons.add),
             title: const Text("Tambah Buku"),
             onTap: () {
